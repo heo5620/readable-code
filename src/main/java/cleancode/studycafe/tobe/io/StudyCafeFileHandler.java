@@ -12,6 +12,9 @@ import java.util.List;
 
 public class StudyCafeFileHandler {
 
+    /**
+     * 파일에서 이용권 목록 읽기
+     * */
     public List<StudyCafePass> readStudyCafePasses() {
         try {
             List<String> lines = Files.readAllLines(Paths.get("src/main/resources/cleancode/studycafe/pass-list.csv"));

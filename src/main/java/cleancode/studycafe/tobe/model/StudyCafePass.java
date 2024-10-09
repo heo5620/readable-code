@@ -1,11 +1,12 @@
 package cleancode.studycafe.tobe.model;
 
+//하나의 이용권
 public class StudyCafePass {
 
     private final StudyCafePassType passType;
-    private final int duration;
-    private final int price;
-    private final double discountRate;
+    private final int duration; //기간
+    private final int price; //가격
+    private final double discountRate; //할인율
 
     private StudyCafePass(StudyCafePassType passType, int duration, int price, double discountRate) {
         this.passType = passType;
