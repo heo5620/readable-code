@@ -1,6 +1,5 @@
 package cleancode.studycafe.tobe.model;
 
-//하나의 이용권
 public class StudyCafePass {
 
     private final StudyCafePassType passType;
