@@ -1,4 +1,4 @@
-package cleancode.studycafe.tobe.model;
+package cleancode.studycafe.tobe.model.pass;
 
 import java.util.Set;
 
@@ -8,7 +8,7 @@ public enum StudyCafePassType {
     WEEKLY("주 단위 이용권"),
     FIXED("1인 고정석");
 
-    private static final Set<StudyCafePassType> LOCKER_TYPES = Set.of(cleancode.studycafe.tobe.model.StudyCafePassType.FIXED);
+    private static final Set<StudyCafePassType> LOCKER_TYPES = Set.of(StudyCafePassType.FIXED);
 
     private final String description;
 

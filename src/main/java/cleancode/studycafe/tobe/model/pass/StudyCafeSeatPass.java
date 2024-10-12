@@ -1,22 +1,28 @@
-package cleancode.studycafe.tobe.model;
+package cleancode.studycafe.tobe.model.pass;
+
+import cleancode.studycafe.tobe.model.pass.locker.StudyCafeLockerPass;
 
 //하나의 이용권
-public class StudyCafePass {
+public class StudyCafeSeatPass implements StudyCafePass{
 
     private final StudyCafePassType passType;
     private final int duration; //기간
     private final int price; //가격
     private final double discountRate; //할인율
 
-    private StudyCafePass(StudyCafePassType passType, int duration, int price, double discountRate) {
+    private StudyCafeSeatPass(StudyCafePassType passType, int duration, int price, double discountRate) {
         this.passType = passType;
         this.duration = duration;
         this.price = price;
         this.discountRate = discountRate;
     }
 
-    public static StudyCafePass of(StudyCafePassType passType, int duration, int price, double discountRate) {
-        return new StudyCafePass(passType, duration, price, discountRate);
+    public static StudyCafeSeatPass of(StudyCafePassType passType, int duration, int price, double discountRate) {
+        return new StudyCafeSeatPass(passType, duration, price, discountRate);
+    }
+
+    public boolean cannotUseLocker() {
+        return this.passType.isNotLockerType();
     }
 
     public boolean isSameDurationType(StudyCafeLockerPass lockerPass) {
@@ -27,14 +33,17 @@ public class StudyCafePass {
         return this.passType == studyCafePassType;
     }
 
+    @Override
     public StudyCafePassType getPassType() {
         return passType;
     }
 
+    @Override
     public int getDuration() {
         return duration;
     }
 
+    @Override
     public int getPrice() {
         return price;
     }
@@ -43,20 +52,4 @@ public class StudyCafePass {
         return discountRate;
     }
 
-    public String display() {
-        if (passType == StudyCafePassType.HOURLY) {
-            return String.format("%s시간권 - %d원", duration, price);
-        }
-        if (passType == StudyCafePassType.WEEKLY) {
-            return String.format("%s주권 - %d원", duration, price);
-        }
-        if (passType == StudyCafePassType.FIXED) {
-            return String.format("%s주권 - %d원", duration, price);
-        }
-        return "";
-    }
-
-    public boolean cannotUseLocker() {
-        return this.passType.isNotLockerType();
-    }
 }
