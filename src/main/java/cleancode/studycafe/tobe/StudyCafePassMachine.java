@@ -9,6 +9,7 @@ import cleancode.studycafe.tobe.model.StudyCafePass;
 import cleancode.studycafe.tobe.model.StudyCafePassType;
 
 import java.util.List;
+import java.util.Optional;
 
 public class StudyCafePassMachine {
 
@@ -18,30 +19,17 @@ public class StudyCafePassMachine {
 
     public void run() {
         try {
+            //소개와 안내 메시지
             outputHandler.showWelcomeMessage();
             outputHandler.showAnnouncement();
 
-            //1. 스터디 사용권 타입 선택
-            outputHandler.askPassTypeSelection(); //타입 목록 출력
-            StudyCafePassType studyCafePassType = inputHandler.getPassTypeSelectingUserAction();
+            StudyCafePass selectedPass = selectPass();
+            Optional<StudyCafeLockerPass> optionalLockerPass = selectLockerPass(selectedPass);
 
-            //2. 파일 읽어서 리스트 추출
-            List<StudyCafePass> studyCafePasses = studyCafeFileHandler.readStudyCafePasses();
-
-            //3. 스터디 사용권 타입별 분기문
-            switch (studyCafePassType) {
-                case HOURLY -> selectHourlyPassType(studyCafePasses);
-                case WEEKLY -> selectWeeklyPassType(studyCafePasses);
-                case FIXED -> selectFixedPassType(studyCafePasses);
-            }
-            if (studyCafePassType == StudyCafePassType.HOURLY) { //시간권
-                selectHourlyPassType(studyCafePasses);
-            } else if (studyCafePassType == StudyCafePassType.WEEKLY) { //주간권
-                selectWeeklyPassType(studyCafePasses);
-            } else if (studyCafePassType == StudyCafePassType.FIXED) { //고정석
-                selectFixedPassType(studyCafePasses);
-            }
-
+            optionalLockerPass.ifPresentOrElse(
+                lockerPass -> outputHandler.showPassOrderSummary(selectedPass, lockerPass),
+                () -> outputHandler.showPassOrderSummary(selectedPass)
+            );
         } catch (AppException e) {
             outputHandler.showSimpleMessage(e.getMessage());
         } catch (Exception e) {
@@ -49,63 +37,58 @@ public class StudyCafePassMachine {
         }
     }
 
-    private void selectFixedPassType(List<StudyCafePass> studyCafePasses) {
-        List<StudyCafePass> fixedPasses = studyCafePasses.stream()
-            .filter(studyCafePass -> studyCafePass.getPassType() == StudyCafePassType.FIXED)
+    private StudyCafePass selectPass() {
+        //이용권 타입 입력 받기
+        outputHandler.askPassTypeSelection();
+        StudyCafePassType passType = inputHandler.getPassTypeSelectingUserAction();
+
+        List<StudyCafePass> passCandidates = findPassCandidatesBy(passType);
+
+        //이용권 입력 받기
+        outputHandler.showPassListForSelection(passCandidates);
+        StudyCafePass selectedPass = inputHandler.getSelectPass(passCandidates);
+        return selectedPass;
+    }
+
+    private List<StudyCafePass> findPassCandidatesBy(StudyCafePassType studyCafePassType) {
+        //파일 읽기
+        List<StudyCafePass> allPasses = studyCafeFileHandler.readStudyCafePasses();
+
+        //이용권 타입에 맞는 이용권 리스트 추출
+        return allPasses.stream()
+            .filter(studyCafePass -> studyCafePass.getPassType() == studyCafePassType)
             .toList();
+    }
 
-        outputHandler.showPassListForSelection(fixedPasses);
+    private Optional<StudyCafeLockerPass> selectLockerPass(StudyCafePass selectedPass) {
+        if (selectedPass.getPassType() != StudyCafePassType.FIXED) {
+            return Optional.empty();
+        }
 
-        StudyCafePass selectedPass = inputHandler.getSelectPass(fixedPasses);
+        StudyCafeLockerPass lockerPassCandidate = findLockerPassCandidateBy(selectedPass);
 
-        List<StudyCafeLockerPass> lockerPasses = studyCafeFileHandler.readLockerPasses();
-        StudyCafeLockerPass lockerPass = lockerPasses.stream()
-            .filter(option ->
-                option.getPassType() == selectedPass.getPassType()
-                    && option.getDuration() == selectedPass.getDuration()
+        if (lockerPassCandidate != null) {
+            outputHandler.askLockerPass(lockerPassCandidate);
+            boolean isLockerSelected = inputHandler.getLockerSelection();
+
+            if (isLockerSelected) {
+                return Optional.of(lockerPassCandidate);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private StudyCafeLockerPass findLockerPassCandidateBy(StudyCafePass pass) {
+        List<StudyCafeLockerPass> allLockerPasses = studyCafeFileHandler.readLockerPasses();
+
+        return allLockerPasses.stream()
+            .filter(lockerPass ->
+                lockerPass.getPassType() == pass.getPassType()
+                    && lockerPass.getDuration() == pass.getDuration()
             )
             .findFirst()
             .orElse(null);
-
-        boolean lockerSelection = false;
-        if (lockerPass != null) {
-            outputHandler.askLockerPass(lockerPass);
-            lockerSelection = inputHandler.getLockerSelection();
-        }
-
-        if (lockerSelection) {
-            outputHandler.showPassOrderSummary(selectedPass, lockerPass);
-        } else {
-            outputHandler.showPassOrderSummary(selectedPass, null);
-        }
-    }
-
-    private void selectWeeklyPassType(List<StudyCafePass> studyCafePasses) {
-        List<StudyCafePass> weeklyPasses = studyCafePasses.stream()
-            .filter(studyCafePass -> studyCafePass.getPassType() == StudyCafePassType.WEEKLY)
-            .toList();
-
-        outputHandler.showPassListForSelection(weeklyPasses);
-
-        StudyCafePass selectedPass = inputHandler.getSelectPass(weeklyPasses);
-
-        outputHandler.showPassOrderSummary(selectedPass, null);
-    }
-
-    private void selectHourlyPassType(List<StudyCafePass> studyCafePasses) {
-        //4. 각 타입별 이용권만 필터링하여 리스트로 반환
-        List<StudyCafePass> hourlyPasses = studyCafePasses.stream()
-            .filter(studyCafePass -> studyCafePass.getPassType() == StudyCafePassType.HOURLY)
-            .toList();
-
-        //5. 사용자에게 이용권 목록 출력
-        outputHandler.showPassListForSelection(hourlyPasses);
-
-        //6. 사용자가 이용권 선택
-        StudyCafePass selectedPass = inputHandler.getSelectPass(hourlyPasses);
-
-        //7. 선택한 이용권 출력
-        outputHandler.showPassOrderSummary(selectedPass, null);
     }
 
 }
