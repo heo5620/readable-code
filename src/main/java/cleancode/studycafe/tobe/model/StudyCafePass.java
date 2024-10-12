@@ -1,7 +1,5 @@
 package cleancode.studycafe.tobe.model;
 
-import java.util.Set;
-
 //하나의 이용권
 public class StudyCafePass {
 
